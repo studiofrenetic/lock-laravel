@@ -23,6 +23,16 @@ class DatabaseDriver implements Driver
     protected $table;
 
     /**
+     * @var \BeatSwitch\Lock\Permissions\Permission[]
+     */
+    protected $callerPermissions;
+
+    /**
+     * @var \BeatSwitch\Lock\Permissions\Permission[]
+     */
+    protected $rolePermissions;
+
+    /**
      * @param \Illuminate\Database\ConnectionInterface $connection
      * @param string $table
      */
@@ -40,12 +50,17 @@ class DatabaseDriver implements Driver
      */
     public function getCallerPermissions(Caller $caller)
     {
-        $results = $this->getTable()
+        if ( ! $this->callerPermissions )
+        {
+            $results = $this->getTable()
             ->where('caller_type', $caller->getCallerType())
             ->where('caller_id', $caller->getCallerId())
             ->get();
 
-        return PermissionFactory::createFromData($results);
+            $this->callerPermissions =  PermissionFactory::createFromData($results);
+        }
+
+        return $this->callerPermissions;
     }
 
     /**
@@ -135,9 +150,14 @@ class DatabaseDriver implements Driver
      */
     public function getRolePermissions(Role $role)
     {
-        $results = $this->getTable()->where('role', $role->getRoleName())->get();
+        if ( ! $this->rolePermissions )
+        {
+            $results = $this->getTable()->where('role', $role->getRoleName())->get();
 
-        return PermissionFactory::createFromData($results);
+            $this->rolePermissions =  PermissionFactory::createFromData($results);
+        }
+
+        return $this->rolePermissions;
     }
 
     /**
