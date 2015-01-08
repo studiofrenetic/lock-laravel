@@ -57,7 +57,7 @@ class DatabaseDriver implements Driver
             ->where('caller_id', $caller->getCallerId())
             ->get();
 
-            $this->callerPermissions =  PermissionFactory::createFromData($results);
+            $this->callerPermissions =  PermissionFactory::createFromData($results->all());
         }
 
         return $this->callerPermissions;
@@ -154,7 +154,7 @@ class DatabaseDriver implements Driver
         {
             $results = $this->getTable()->where('role', $role->getRoleName())->get();
 
-            $this->rolePermissions =  PermissionFactory::createFromData($results);
+            $this->rolePermissions =  PermissionFactory::createFromData($results->all());
         }
 
         return $this->rolePermissions;
