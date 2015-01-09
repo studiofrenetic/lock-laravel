@@ -50,7 +50,7 @@ class DatabaseDriver implements Driver
      */
     public function getCallerPermissions(Caller $caller)
     {
-        $key = $caller->getCallerType().'.'.$caller->getCallerId();
+        $key = $this->getCallerKey($caller);
 
         if ( ! array_key_exists($key, $this->callerPermissions) )
         {
@@ -82,6 +82,8 @@ class DatabaseDriver implements Driver
             'resource_type' => $permission->getResourceType(),
             'resource_id' => $permission->getResourceId(),
         ]);
+
+        unset($this->callerPermissions[$this->getCallerKey($caller)]);
     }
 
     /**
@@ -112,6 +114,8 @@ class DatabaseDriver implements Driver
         }
 
         $query->delete();
+
+        unset($this->callerPermissions[$this->getCallerKey($caller)]);
     }
 
     /**
@@ -178,6 +182,8 @@ class DatabaseDriver implements Driver
             'resource_type' => $permission->getResourceType(),
             'resource_id' => $permission->getResourceId(),
         ]);
+
+        unset($this->rolePermissions[$role->getRoleName()]);
     }
 
     /**
@@ -207,6 +213,8 @@ class DatabaseDriver implements Driver
         }
 
         $query->delete();
+
+        unset($this->rolePermissions[$role->getRoleName()]);
     }
 
     /**
@@ -246,5 +254,10 @@ class DatabaseDriver implements Driver
     protected function getTable()
     {
         return $this->connection->table($this->table);
+    }
+
+    protected function getCallerKey($caller)
+    {
+        return $caller->getCallerType().'.'.$caller->getCallerId();
     }
 }
