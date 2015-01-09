@@ -50,7 +50,7 @@ class DatabaseDriver implements Driver
      */
     public function getCallerPermissions(Caller $caller)
     {
-        $key = $caller->getCallerType().'_'.$caller->getCallerId();
+        $key = $caller->getCallerType().'.'.$caller->getCallerId();
 
         if ( ! array_key_exists($key, $this->callerPermissions) )
         {
