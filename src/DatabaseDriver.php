@@ -23,14 +23,14 @@ class DatabaseDriver implements Driver
     protected $table;
 
     /**
-     * @var \BeatSwitch\Lock\Permissions\Permission[]
+     * @var array[\BeatSwitch\Lock\Permissions\Permission[]]
      */
-    protected $callerPermissions;
+    protected $callerPermissions = array();
 
     /**
-     * @var \BeatSwitch\Lock\Permissions\Permission[]
+     * @var array[\BeatSwitch\Lock\Permissions\Permission[]]
      */
-    protected $rolePermissions;
+    protected $rolePermissions = array();
 
     /**
      * @param \Illuminate\Database\ConnectionInterface $connection
@@ -50,17 +50,19 @@ class DatabaseDriver implements Driver
      */
     public function getCallerPermissions(Caller $caller)
     {
-        if ( ! $this->callerPermissions )
+        $key = $caller->getCallerType().'_'.$caller->getCallerId();
+
+        if ( ! array_key_exists($key, $this->callerPermissions) )
         {
             $results = $this->getTable()
             ->where('caller_type', $caller->getCallerType())
             ->where('caller_id', $caller->getCallerId())
             ->get();
 
-            $this->callerPermissions =  PermissionFactory::createFromData($results->all());
+            $this->callerPermissions[$key] =  PermissionFactory::createFromData($results->all());
         }
 
-        return $this->callerPermissions;
+        return $this->callerPermissions[$key];
     }
 
     /**
@@ -150,14 +152,14 @@ class DatabaseDriver implements Driver
      */
     public function getRolePermissions(Role $role)
     {
-        if ( ! $this->rolePermissions )
+        if ( ! array_key_exists($role->getRoleName(), $this->rolePermissions) )
         {
             $results = $this->getTable()->where('role', $role->getRoleName())->get();
 
-            $this->rolePermissions =  PermissionFactory::createFromData($results->all());
+            $this->rolePermissions[$role->getRoleName()] =  PermissionFactory::createFromData($results->all());
         }
 
-        return $this->rolePermissions;
+        return $this->rolePermissions[$role->getRoleName()];
     }
 
     /**
