@@ -23,14 +23,18 @@ class DatabaseDriver implements Driver
     protected $table;
 
     /**
-     * @var array[\BeatSwitch\Lock\Permissions\Permission[]]
+     * The caller permissions cache at runtime
+     *
+     * @var array
      */
-    protected $callerPermissions = array();
+    protected $callerPermissions = [];
 
     /**
-     * @var array[\BeatSwitch\Lock\Permissions\Permission[]]
+     * The role permissions cache at runtime
+     *
+     * @var array
      */
-    protected $rolePermissions = array();
+    protected $rolePermissions = [];
 
     /**
      * @param \Illuminate\Database\ConnectionInterface $connection
@@ -52,17 +56,17 @@ class DatabaseDriver implements Driver
     {
         $key = $this->getCallerKey($caller);
 
-        if ( ! array_key_exists($key, $this->callerPermissions) )
-        {
-            $results = $this->getTable()
+        // If we've saved the caller permissions we don't need to fetch them again.
+        if (array_key_exists($key, $this->callerPermissions) && $this->callerPermissions[$key]) {
+            return $this->callerPermissions[$key];
+        }
+
+        $results = $this->getTable()
             ->where('caller_type', $caller->getCallerType())
             ->where('caller_id', $caller->getCallerId())
             ->get();
 
-            $this->callerPermissions[$key] =  PermissionFactory::createFromData($results);
-        }
-
-        return $this->callerPermissions[$key];
+        return $this->callerPermissions[$key] = PermissionFactory::createFromData($results);
     }
 
     /**
@@ -83,7 +87,7 @@ class DatabaseDriver implements Driver
             'resource_id' => $permission->getResourceId(),
         ]);
 
-        unset($this->callerPermissions[$this->getCallerKey($caller)]);
+        $this->resetPermissionsCacheForCaller($caller);
     }
 
     /**
@@ -115,7 +119,7 @@ class DatabaseDriver implements Driver
 
         $query->delete();
 
-        unset($this->callerPermissions[$this->getCallerKey($caller)]);
+        $this->resetPermissionsCacheForCaller($caller);
     }
 
     /**
@@ -156,14 +160,16 @@ class DatabaseDriver implements Driver
      */
     public function getRolePermissions(Role $role)
     {
-        if ( ! array_key_exists($role->getRoleName(), $this->rolePermissions) )
-        {
-            $results = $this->getTable()->where('role', $role->getRoleName())->get();
+        $key = $this->getRoleKey($role);
 
-            $this->rolePermissions[$role->getRoleName()] =  PermissionFactory::createFromData($results);
+        // If we've saved the caller permissions we don't need to fetch them again.
+        if (array_key_exists($key, $this->rolePermissions) && $this->rolePermissions[$key]) {
+            return $this->rolePermissions[$key];
         }
 
-        return $this->rolePermissions[$role->getRoleName()];
+        $results = $this->getTable()->where('role', $role->getRoleName())->get();
+
+        return $this->rolePermissions[$key] = PermissionFactory::createFromData($results);
     }
 
     /**
@@ -183,7 +189,7 @@ class DatabaseDriver implements Driver
             'resource_id' => $permission->getResourceId(),
         ]);
 
-        unset($this->rolePermissions[$role->getRoleName()]);
+        $this->resetPermissionsCacheForRole($role);
     }
 
     /**
@@ -214,7 +220,7 @@ class DatabaseDriver implements Driver
 
         $query->delete();
 
-        unset($this->rolePermissions[$role->getRoleName()]);
+        $this->resetPermissionsCacheForRole($role);
     }
 
     /**
@@ -256,8 +262,41 @@ class DatabaseDriver implements Driver
         return $this->connection->table($this->table);
     }
 
-    protected function getCallerKey($caller)
+    /**
+     * Creates a key to store the caller's permissions
+     *
+     * @param \BeatSwitch\Lock\Callers\Caller $caller
+     * @return string
+     */
+    private function getCallerKey(Caller $caller)
     {
-        return $caller->getCallerType().'.'.$caller->getCallerId();
+        return 'caller_' . $caller->getCallerType() . '_' . $caller->getCallerId();
+    }
+
+    /**
+     * Creates a key to store the role's permissions
+     *
+     * @param \BeatSwitch\Lock\Roles\Role $role
+     * @return string
+     */
+    private function getRoleKey(Role $role)
+    {
+        return 'role_' . $role->getRoleName();
+    }
+
+    /**
+     * @param \BeatSwitch\Lock\Callers\Caller $caller
+     */
+    protected function resetPermissionsCacheForCaller(Caller $caller)
+    {
+        $this->callerPermissions[$this->getCallerKey($caller)] = [];
+    }
+
+    /**
+     * @param \BeatSwitch\Lock\Roles\Role $role
+     */
+    protected function resetPermissionsCacheForRole(Role $role)
+    {
+        $this->rolePermissions[$this->getRoleKey($role)] = [];
     }
 }
