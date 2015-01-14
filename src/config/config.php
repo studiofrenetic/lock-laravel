@@ -20,7 +20,7 @@ return [
     |
     */
 
-    'driver' => 'array',
+    'driver' => 'database',
 
     /*
     |--------------------------------------------------------------------------
@@ -52,7 +52,7 @@ return [
 
     'permissions' => function (Manager $manager, Lock $caller) {
         // Set your configuration here.
-        // $manager->alias('manage', ['create', 'read', 'update', 'delete']);
+        $manager->alias('manage', ['create', 'read', 'update', 'delete']);
         // $manager->setRole('user', 'guest');
         // $manager->setRole(['editor', 'admin'], 'user');
 

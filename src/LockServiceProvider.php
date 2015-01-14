@@ -9,26 +9,17 @@ use Illuminate\Support\ServiceProvider;
 class LockServiceProvider extends ServiceProvider
 {
     /**
-     * Indicates if loading of the provider is deferred.
-     *
-     * @var bool
-     */
-    protected $defer = true;
-
-    /**
      * Bootstrap the service provider
      */
     public function boot()
     {
         if ( ! $this->app->runningInConsole() ) {
-            //        $this->package('beatswitch/lock-laravel', 'lock-laravel', __DIR__);
-
             // Here we should execute the permissions callback from the config file so all
             // the roles and aliases get registered and if we're using the array driver,
             // all of our permissions get set beforehand.
 
             // Get the permissions callback from the config file.
-            $callback = $this->app['config']->get('lock.permissions');
+            $callback = $this->app['config']->get('lock-laravel::config.permissions');
 
             // Add the permissions which were set in the config file.
             call_user_func($callback, $this->app['lock.manager'], $this->app['lock']);
@@ -42,11 +33,12 @@ class LockServiceProvider extends ServiceProvider
      */
     public function register()
     {
+        $this->registerConfiguration();
+
         if ( ! $this->app->runningInConsole() ) {
             $this->bootstrapManager();
             $this->bootstrapAuthedUserLock();
         }
-
     }
 
     /**
@@ -59,6 +51,8 @@ class LockServiceProvider extends ServiceProvider
         $this->app->bindShared('lock.manager', function () use ($driver) {
             return new Manager($driver);
         });
+
+        $this->app->alias('lock.manager', 'BeatSwitch\Lock\Manager');
     }
 
     /**
@@ -69,12 +63,12 @@ class LockServiceProvider extends ServiceProvider
     protected function getDriver()
     {
         // Get the configuration options for Lock.
-        $driver = $this->app['config']->get('lock.driver');
+        $driver = $this->app['config']->get('lock-laravel::config.driver');
 
         // If the user choose the persistent database driver, bootstrap
         // the database driver with the default database connection.
         if ($driver === 'database') {
-            $table = $this->app['config']->get('lock.table');
+            $table = $this->app['config']->get('lock-laravel::config.table');
 
             return new DatabaseDriver($this->app['db']->connection(), $table);
         }
@@ -101,17 +95,34 @@ class LockServiceProvider extends ServiceProvider
             }
 
             // Get the caller type for the user caller.
-            $userCallerType = $app['config']->get('lock.user_caller_type');
+            $userCallerType = $app['config']->get('lock-laravel::config.user_caller_type');
 
             // Bootstrap a SimpleCaller object which has the "guest" role.
             return $app['lock.manager']->caller(new SimpleCaller($userCallerType, 0, ['guest']));
         });
+
+        $this->app->alias('lock', 'BeatSwitch\Lock\Lock');
+    }
+
+    /**
+     * Register configuration files, with L5 fallback
+     */
+    protected function registerConfiguration()
+    {
+        // Is it possible to register the config?
+        if (method_exists($this->app['config'], 'package')) {
+            $this->app['config']->package('beatswitch/lock-laravel', __DIR__ . '/config');
+        } else {
+            // Load the config for now..
+            $config = $this->app['files']->getRequire(__DIR__ .'/config/config.php');
+            $this->app['config']->set('lock-laravel::config', $config);
+        }
     }
 
     /**
      * Get the services provided by the provider
      *
-     * @return array
+     * @return string[]
      */
     public function provides()
     {
