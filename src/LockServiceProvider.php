@@ -22,6 +22,7 @@ class LockServiceProvider extends ServiceProvider
     {
         $configPath = __DIR__ . '/config/lock.php';
         $this->publishes([$configPath => config_path('lock.php')], 'config');
+        $this->publishes([__DIR__.'/migrations/' => base_path('/database/migrations')], 'migrations');
         
         // Here we should execute the permissions callback from the config file so all
         // the roles and aliases get registered and if we're using the array driver,
