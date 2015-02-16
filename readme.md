@@ -39,7 +39,7 @@ Register the service provider in your `app.php` config file.
 'BeatSwitch\Lock\Integrations\Laravel\LockServiceProvider',
 ```
 
-Register facades in your `app.php` config file.
+Register the facades in your `app.php` config file.
 
 ```php
 'Lock' => 'BeatSwitch\Lock\Integrations\Laravel\Facades\Lock',
@@ -58,7 +58,9 @@ If you're using the database driver you should run the package's migrations. Thi
 $ php artisan migrate --package="beatswitch/lock-laravel"
 ```
 
-Make sure to set the `BeatSwitch\Lock\LockAware` trait on your `User` model. That way your authed user will receive a Lock instance of itself so you can call permissions directly from your user object. If no user is authed, a `SimpleCaller` object will be bootstrapped which has the `guest` role. That way you can still use the `Lock` facade.
+Please read the main [Lock documentation](https://github.com/BeatSwitch/lock) for setting up the caller contract on your `User` model and for more in-depth documentation on how Lock works.
+
+Also make sure to set the `BeatSwitch\Lock\LockAware` trait on your `User` model. That way your authenticated user will receive a Lock instance of itself so you can call permissions directly from your user object. If no user is authenticated, a `SimpleCaller` object will be bootstrapped which has the `guest` role. That way you can still use the `Lock` facade.
 
 ## Usage
 
