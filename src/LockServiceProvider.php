@@ -76,7 +76,7 @@ class LockServiceProvider extends ServiceProvider
 
         // If the user choose the persistent database driver, bootstrap
         // the database driver with the default database connection.
-        if ($driver === 'database') {
+        if ($driver === 'database' && ! $this->app->runningInConsole()) {
             $table = $this->app['config']->get('lock.table');
 
             return new DatabaseDriver($this->app['db']->connection(), $table);
