@@ -24,17 +24,16 @@ class LockServiceProvider extends ServiceProvider
         $this->publishes([$configPath => config_path('lock.php')], 'config');
         $this->publishes([__DIR__.'/migrations/' => base_path('/database/migrations')], 'migrations');
 
-        if ( ! $this->app->runningInConsole() ) {
-            // Here we should execute the permissions callback from the config file so all
-            // the roles and aliases get registered and if we're using the array driver,
-            // all of our permissions get set beforehand.
+        // Here we should execute the permissions callback from the config file so all
+        // the roles and aliases get registered and if we're using the array driver,
+        // all of our permissions get set beforehand.
 
-            // Get the permissions callback from the config file.
-            $callback = $this->app['config']->get('lock.permissions');
+        // Get the permissions callback from the config file.
+        $callback = $this->app['config']->get('lock.permissions');
 
-            // Add the permissions which were set in the config file.
-            call_user_func($callback, $this->app['lock.manager'], $this->app['lock']);
-        }
+        // Add the permissions which were set in the config file.
+        call_user_func($callback, $this->app['lock.manager'], $this->app['lock']);
+
     }
 
     /**
@@ -47,10 +46,8 @@ class LockServiceProvider extends ServiceProvider
         $configPath = __DIR__ . '/config/lock.php';
         $this->mergeConfigFrom($configPath, 'lock');
 
-        if ( ! $this->app->runningInConsole() ) {
-            $this->bootstrapManager();
-            $this->bootstrapAuthedUserLock();
-        }
+        $this->bootstrapManager();
+        $this->bootstrapAuthedUserLock();
     }
 
     /**
